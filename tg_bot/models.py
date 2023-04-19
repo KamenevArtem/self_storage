@@ -1,5 +1,7 @@
 from django.db import models
+from django.utils import timezone
 from phonenumber_field.modelfields import PhoneNumberField
+
 
 class Box(models.Model):
     hight = models.FloatField(
@@ -18,6 +20,13 @@ class Box(models.Model):
         verbose_name="Стоимость суточной аренды",
         null=True
     )
+    
+    class Meta:
+        verbose_name = "Бокс"
+        verbose_name_plural = "Боксы"
+    
+    def __str__(self):
+        return self.name
 
 class Order(models.Model):
     box = models.ForeignKey(
@@ -30,11 +39,12 @@ class Order(models.Model):
     )
     order_start_date = models.DateField(
         verbose_name="Дата начала контракта",
-        blank=True
+        blank=True,
+        default=timezone.now,
     )
     order_end_date = models.DateField(
         verbose_name="Дата закрытия заказа",
-        blank=True
+        blank=True,
     )
     cargo_size = models.FloatField(
         verbose_name="Объём груза"
@@ -42,6 +52,13 @@ class Order(models.Model):
     cargo_weight = models.FloatField(
         verbose_name="Вес груза"
     )
+
+    class Meta:
+        verbose_name = "Заказ"
+        verbose_name_plural = "Заказы"
+
+    def __str__(self):
+        return self.name
 
 
 class Customer(models.Model):
@@ -66,4 +83,11 @@ class Customer(models.Model):
         blank=True,
         related_name='customers'
     )
+
+    class Meta:
+        verbose_name = "Клиент"
+        verbose_name_plural = "Клиеты"
+
+    def __str__(self):
+        return self.name
 

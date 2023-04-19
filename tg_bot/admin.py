@@ -1,5 +1,5 @@
 from django.contrib import admin
-from tg_bot.models import Box, Order, Customer
+from .models import Box, Order, Customer
 class BoxAdmin(admin.ModelAdmin):
     list_display = ('id', 'hight', 'length', 'width',)
 
