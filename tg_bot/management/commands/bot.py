@@ -1,6 +1,11 @@
+import logging
+
+
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.db import models
+from .customer_handlers import conv_handler, unknown
+
 
 from telegram import Bot
 from telegram import Update
@@ -27,18 +32,6 @@ def log_errors(function):
     return inner
 
 
-@log_errors
-def start(update: Update, context: CallbackContext):
-    keyboard = [
-        [
-            InlineKeyboardButton("Оставить вещи", callback_data='leave'),
-            InlineKeyboardButton("Забрать вещи", callback_data='take'),
-        ],
-        [InlineKeyboardButton("Узнать правила хранения", callback_data='rules')],
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text('Что Вас интересует?', reply_markup=reply_markup)
-
 
 @log_errors
 def call_leave_staff(update: Update, context: CallbackContext):
@@ -62,37 +55,24 @@ def handle_buttons(update: Update, context: CallbackContext):
         query.edit_message_text(text=f'Правила хранения (FAQ)')
 
 
-@log_errors
-def unknown(update: Update, context: CallbackContext):
-    context.bot.send_message(
-        chat_id=update.effective_chat.id,
-        text="Прошу прощения, данной команды я не знаю"
-        )
-
-
 class Command(BaseCommand):
     def handle(self, *args, **kwargs):
-        request = Request(
-            connect_timeout=0.5,
-            read_timeout=1.0,
+        logging.basicConfig(
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            level=logging.INFO
         )
         bot = Bot(
-            request=request,
             token=settings.TOKEN,
         )
         updater = Updater(
             bot=bot,
         )
         dispatcher = updater.dispatcher
-        
-        start_command_handler = CommandHandler('start', start)
-        dispatcher.add_handler(start_command_handler)
+        dispatcher.add_handler(conv_handler)
         unknown_command_handler = MessageHandler(Filters.command, unknown)
         dispatcher.add_handler(unknown_command_handler)
         
-        dispatcher.add_handler(CallbackQueryHandler(handle_buttons))
-        
-        dispatcher.add_handler(MessageHandler(Filters.text, call_leave_staff))
+        # dispatcher.add_handler(CallbackQueryHandler(handle_buttons))
 
         updater.start_polling()
         updater.idle()
