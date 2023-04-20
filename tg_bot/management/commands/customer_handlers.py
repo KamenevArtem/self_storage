@@ -9,7 +9,7 @@ from telegram.ext import MessageHandler
 from .keyboards import create_keyboard
 
 
-START_CHOISE, LEAVE_CHOISE, DELIVERY_ORDER, WEIGHT_CHOISE, SIZE_CHOISE, ADRESS, PHONE_NUMBER, PRIVACY = range(8)
+START_CHOISE, LEAVE_CHOISE, DELIVERY_ORDER, WEIGHT_CHOISE, SIZE_CHOISE, ADRESS, PHONE_NUMBER, PRIVACY, CHECK, MADE_ORDER, PRICE = range(11)
 
 
 def unknown(update: Update, context: CallbackContext):
@@ -117,7 +117,32 @@ def get_staff_size(update: Update, context:CallbackContext):
     return SIZE_CHOISE
 
 
+def show_price(update: Update, context:CallbackContext):
+    context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text='Стоимость хранения будет составлять ... в месяц',
+        )
+    button_names = [
+        'Да',
+        'Нет'
+    ]
+    context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text='Вас устраивает текущая стоимость?',
+        reply_markup=create_keyboard(
+            button_names, 
+            buttons_per_row=2,
+            )
+        )
+    return PRICE
+
+
 def give_privacy_agreement(update: Update, context:CallbackContext):
+    if update.message.text == 'Не знаю':
+        context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text='Хорошо, мы замерим и сообщим точную цену при оформлении бокса',
+            )
     button_names = [
         'Согласен',
         'Не согласен'
@@ -134,11 +159,6 @@ def give_privacy_agreement(update: Update, context:CallbackContext):
 
 
 def get_customer_address(update: Update, context:CallbackContext):
-    if update.message.text == 'Не знаю':
-        context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            text='Хорошо, мы замерим и сообщим точную цену при оформлении бокса',
-            )
     context.bot.send_message(
         chat_id=update.effective_chat.id,
         text='Введите Ваш адрес',
@@ -154,16 +174,37 @@ def get_phone_number(update: Update, context:CallbackContext):
     return PHONE_NUMBER
 
 
-# def check_customer_information(update: Update, context:CallbackContext):
-#     context.bot.send_message(
-#             chat_id=update.effective_chat.id,
-#             text='Верны ли Ваши данные?',
-#             )
-#     button_names= [
-#         'Да',
-#         'Нет'
-#     ]
-#     return CHECK
+def check_customer_information(update: Update, context:CallbackContext):
+    button_names= [
+        'Да',
+        'Нет'
+    ]
+    context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text='Верны ли Ваши данные?',
+        reply_markup=create_keyboard(
+            button_names, 
+            buttons_per_row=2,
+            )
+        )
+    return CHECK
+
+
+def get_delivery_time(update: Update, context:CallbackContext):
+    context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text='Когда Вам удобно отправить груз?',
+        )
+    return MADE_ORDER
+
+
+def create_order(update: Update, context:CallbackContext):
+    context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text='Спасибо за уделенное время. Доставщик заберет груз (дата/время), '
+        'предварительно позвонив Вам',
+        )
+    return ConversationHandler.END
 
 
 def take_staff(update: Update, context:CallbackContext):
@@ -264,7 +305,7 @@ conv_handler = ConversationHandler(
         WEIGHT_CHOISE: [
             MessageHandler(
                 Filters.text('Не знаю'),
-                get_customer_address,
+                give_privacy_agreement,
                 pass_user_data=True,
             ),
             MessageHandler(
@@ -276,12 +317,24 @@ conv_handler = ConversationHandler(
         SIZE_CHOISE: [
             MessageHandler(
                 Filters.text('Не знаю'),
-                get_customer_address,
+                give_privacy_agreement,
                 pass_user_data=True,
             ),
             MessageHandler(
                 Filters.text,
-                get_customer_address,
+                show_price,
+                pass_user_data=True,
+            )
+        ],
+        PRICE: [
+            MessageHandler(
+                Filters.text('Да'),
+                give_privacy_agreement,
+                pass_user_data=True,
+            ),
+            MessageHandler(
+                Filters.text('Нет'),
+                cancel,
                 pass_user_data=True,
             )
         ],
@@ -301,6 +354,32 @@ conv_handler = ConversationHandler(
             MessageHandler(
                 Filters.text,
                 get_phone_number,
+                pass_user_data=True,
+            )
+        ],
+        PHONE_NUMBER:[
+            MessageHandler(
+                Filters.text,
+                check_customer_information,
+                pass_user_data=True,
+            )
+        ],
+        CHECK:[
+            MessageHandler(
+                Filters.text('Да'),
+                get_delivery_time,
+                pass_user_data=True,
+            ),
+            MessageHandler(
+                Filters.text('Нет'),
+                get_customer_address,
+                pass_user_data=True,
+            )
+        ],
+        MADE_ORDER: [
+            MessageHandler(
+                Filters.text,
+                create_order,
                 pass_user_data=True,
             )
         ]
