@@ -1,3 +1,6 @@
+import os
+import qrcode
+
 from telegram import Update
 from telegram import ReplyKeyboardRemove
 from telegram.ext import CallbackContext
@@ -9,7 +12,7 @@ from telegram.ext import MessageHandler
 from .keyboards import create_keyboard
 
 
-START_CHOISE, LEAVE_CHOISE, DELIVERY_ORDER, WEIGHT_CHOISE, SIZE_CHOISE, ADRESS, PHONE_NUMBER, PRIVACY, CHECK, MADE_ORDER, PRICE = range(11)
+START_CHOISE, LEAVE_CHOISE, DELIVERY_ORDER, WEIGHT_CHOISE, SIZE_CHOISE, ADRESS, PHONE_NUMBER, PRIVACY, CHECK, MADE_ORDER, PRICE, TAKE_STAFF, SHOW_ORDERS, HANDLE_ORDER = range(14)
 
 
 def unknown(update: Update, context: CallbackContext):
@@ -210,7 +213,7 @@ def create_order(update: Update, context:CallbackContext):
 def take_staff(update: Update, context:CallbackContext):
     button_names= [
         'Заказ 1',
-        'Заказ 2'
+        'Заказ 2',
     ]
     context.bot.send_message(
         chat_id=update.effective_chat.id,
@@ -221,19 +224,68 @@ def take_staff(update: Update, context:CallbackContext):
             need_start=True
             )
         )
+    return SHOW_ORDERS
+
+
+def show_orders(update: Update, context:CallbackContext):
+    button_names= [
+        'Забрать вещи',
+        'Забрать вещи, но вернуть позже',
+    ]
+    context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text='Что Вас интересует?',
+        reply_markup=create_keyboard(
+            button_names, 
+            buttons_per_row=3,
+            need_start=True
+            )
+        )
+    return HANDLE_ORDER
+
+
+def show_QR(update: Update, context:CallbackContext):
+    if update.message.text == 'Забрать вещи, но вернуть позже':
+        qr_content = [1,5,6,7,9,7,5]
+        qr = qrcode.make(qr_content)
+        qr.save('qr.png')
+        with open('./qr.png', 'rb') as qr_code:
+            context.bot.send_photo(
+                chat_id=update.effective_chat.id,
+                photo=qr_code,
+                )
+    elif update.message.text == 'Забрать вещи':
+        qr_content = [5,66666,778]
+        qr = qrcode.make(qr_content)
+        qr.save('qr.png')
+        with open('./qr.png', 'rb') as qr_code:
+            context.bot.send_photo(
+                chat_id=update.effective_chat.id,
+                photo=qr_code,
+                )
+    else:
+        return ConversationHandler.END
+    os.remove('./qr.png')
+    return ConversationHandler.END
 
 
 def print_FAQ(update: Update, context:CallbackContext):
     button_names= []
+    button_names = [
+        'Оставить вещи',
+        'Забрать вещи',
+        'Узнать правила хранения'
+    ]
     context.bot.send_message(
         chat_id=update.effective_chat.id,
         text='Правила хранения нашего сервиса:',
         reply_markup=create_keyboard(
             button_names, 
-            buttons_per_row=1,
-            need_start=True
+            buttons_per_row=3,
+            need_start=False
             )
         )
+    return START_CHOISE
 
 
 def cancel(update, _):
@@ -380,6 +432,30 @@ conv_handler = ConversationHandler(
             MessageHandler(
                 Filters.text,
                 create_order,
+                pass_user_data=True,
+            )
+        ],
+        SHOW_ORDERS: [
+            MessageHandler(
+                Filters.text('Стартовое меню'),
+                start,
+                pass_user_data=True,
+            ),
+            MessageHandler(
+                Filters.text,
+                show_orders,
+                pass_user_data=True,
+            ),
+        ],
+        HANDLE_ORDER: [
+            MessageHandler(
+                Filters.text('Стартовое меню'),
+                start,
+                pass_user_data=True,
+            ),
+            MessageHandler(
+                Filters.text,
+                show_QR,
                 pass_user_data=True,
             )
         ]
