@@ -13,7 +13,7 @@ def create_keyboard(
         range(0, len(button_names), buttons_per_row)
     ]
     if need_start:
-        rows.append([KeyboardButton('Стартовое меню', )])
+        rows.append([KeyboardButton('Стартовое меню')])
     return ReplyKeyboardMarkup(
         rows,
         resize_keyboard=True,

@@ -304,7 +304,6 @@ conv_handler = ConversationHandler(
                 pass_user_data=True,
             )
         ]
-        
     },
     fallbacks=[
         CommandHandler('cancel', cancel),
