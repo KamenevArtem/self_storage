@@ -9,6 +9,8 @@ from telegram.ext import ConversationHandler
 from telegram.ext import Filters
 from telegram.ext import MessageHandler
 
+from django.shortcuts import get_object_or_404
+from tg_bot.models import Customer, Order
 from .keyboards import create_keyboard
 
 
@@ -23,8 +25,10 @@ def unknown(update: Update, context: CallbackContext):
 
 
 def start(update: Update, context: CallbackContext):
-    print(update.effective_chat.username)
-    print(update.message.text)
+    Customer.objects.update_or_create(
+        external_id=update.effective_chat.id,
+        name=update.effective_chat.username
+        )
     button_names = [
         'Оставить вещи',
         'Забрать вещи',
@@ -48,7 +52,7 @@ def leave_staff(update: Update, context:CallbackContext):
     ]
     context.bot.send_message(
         chat_id=update.effective_chat.id,
-        text='Хотели бы Вы оформить заказ?',
+        text='Рады, что Вы выбираете нас! Хотели бы оформить заказ?',
         reply_markup=create_keyboard(
             button_names, 
             buttons_per_row=2,
@@ -59,6 +63,10 @@ def leave_staff(update: Update, context:CallbackContext):
 
 
 def order_delivery(update: Update, context:CallbackContext):
+    Order.objects.create(
+        customer=Customer.objects.filter(
+        external_id=update.effective_chat.id
+        )[0])
     button_names = [
         'Заказать бесплатную доставку',
         'Привезу сам'
@@ -77,6 +85,10 @@ def order_delivery(update: Update, context:CallbackContext):
 
 def get_staff_weight(update: Update, context:CallbackContext):
     if update.message.text == 'Привезу сам':
+        customer = Customer.objects.get(name=update.effective_chat.username)
+        order = customer.orders.last()
+        order.need_delivery = 'Нет'
+        order.save()
         context.bot.send_message(
             chat_id=update.effective_chat.id,
             text='Адрес нашего склада:',
@@ -102,6 +114,10 @@ def get_staff_weight(update: Update, context:CallbackContext):
 
 
 def get_staff_size(update: Update, context:CallbackContext):
+    customer = Customer.objects.get(name=update.effective_chat.username)
+    order = customer.orders.last()
+    order.cargo_weight = update.message.text
+    order.save()
     button_names = [
         'Менее 3 кв.м',
         '3-7 кв.м',
@@ -121,6 +137,10 @@ def get_staff_size(update: Update, context:CallbackContext):
 
 
 def show_price(update: Update, context:CallbackContext):
+    customer = Customer.objects.get(name=update.effective_chat.username)
+    order = customer.orders.last()
+    order.cargo_size = update.message.text
+    order.save()
     context.bot.send_message(
         chat_id=update.effective_chat.id,
         text='Стоимость хранения будет составлять ... в месяц',
@@ -205,7 +225,7 @@ def create_order(update: Update, context:CallbackContext):
     context.bot.send_message(
         chat_id=update.effective_chat.id,
         text='Спасибо за уделенное время. Доставщик заберет груз (дата/время), '
-        'предварительно позвонив Вам',
+        'предварительно позвонив Вам. Для повторной сессии напишите в чат /start',
         )
     return ConversationHandler.END
 

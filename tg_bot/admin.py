@@ -5,13 +5,12 @@ class BoxAdmin(admin.ModelAdmin):
 
 
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('id', 'customers', 'order_end_date',)
-
+    list_display = ('id', 'customer','conformation', 'order_end_date',)
 
 class CustomerAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'order',)
+    list_display = ('id', 'name',)
 
 
+admin.site.register(Customer, CustomerAdmin)
 admin.site.register(Box, BoxAdmin)
 admin.site.register(Order, OrderAdmin)
-admin.site.register(Customer, CustomerAdmin)

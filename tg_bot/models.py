@@ -26,7 +26,36 @@ class Box(models.Model):
         verbose_name_plural = "Боксы"
     
     def __str__(self):
+        return self.id
+
+class Customer(models.Model):
+    external_id = models.PositiveIntegerField(
+        verbose_name="ID пользователя"
+    )
+    name = models.CharField(
+        max_length=200,
+        verbose_name="Имя пользователя",
+        blank=True,
+        db_index=True
+    )
+    address = models.CharField(
+        max_length=300,
+        verbose_name="Адрес пользователя",
+        blank=True,
+        db_index=True
+    )
+    phone_number = PhoneNumberField(
+        verbose_name = "Номер телефона",
+        blank=True
+    )
+
+    class Meta:
+        verbose_name = "Клиент"
+        verbose_name_plural = "Клиенты"
+
+    def __str__(self):
         return self.name
+
 
 class Order(models.Model):
     box = models.ForeignKey(
@@ -42,52 +71,41 @@ class Order(models.Model):
         blank=True,
         default=timezone.now,
     )
+    
     order_end_date = models.DateField(
         verbose_name="Дата закрытия заказа",
         blank=True,
+        null=True
     )
-    cargo_size = models.FloatField(
-        verbose_name="Объём груза"
+    cargo_size = models.CharField(
+        max_length=50,
+        verbose_name="Объём груза",
+        blank=True,
+        null=True
     )
-    cargo_weight = models.FloatField(
-        verbose_name="Вес груза"
+    cargo_weight = models.CharField(
+        max_length=50,
+        verbose_name="Вес груза",
+        blank=True,
+        null=True
+    )
+    need_delivery = models.CharField(
+        max_length=10,
+        verbose_name='Необходимость доставки',
+        default='Да',
+        blank=True
+    )
+    customer = models.ForeignKey(
+        Customer,
+        verbose_name=("Клиент"),
+        on_delete=models.CASCADE,
+        related_name='orders'
+        )
+    conformation = models.BooleanField(
+        verbose_name='Подтверждение заказа',
+        default=False
     )
 
     class Meta:
         verbose_name = "Заказ"
         verbose_name_plural = "Заказы"
-
-    def __str__(self):
-        return self.name
-
-
-class Customer(models.Model):
-    external_id = models.PositiveIntegerField(
-        verbose_name="ID пользователя"
-    )
-    name = models.CharField(
-        max_length=200,
-        verbose_name="Имя пользователя",
-        blank=True,
-        db_index=True
-    )
-    phone_number = PhoneNumberField(
-        verbose_name = "Номер телефона",
-        blank=True
-    )
-    order = models.ForeignKey(
-        Order,
-        on_delete=models.SET_NULL,
-        verbose_name="Заказы",
-        null=True,
-        blank=True,
-        related_name='customers'
-    )
-
-    class Meta:
-        verbose_name = "Клиент"
-        verbose_name_plural = "Клиеты"
-
-    def __str__(self):
-        return self.name
-
