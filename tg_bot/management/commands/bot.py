@@ -2,12 +2,14 @@ import logging
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
-from .customer_handlers import conv_handler, unknown
 
 from telegram import Bot
 from telegram.ext import Filters
 from telegram.ext import MessageHandler
 from telegram.ext import Updater
+
+from tg_bot.handlers.conversations.employee_conv import employee_conversation
+from tg_bot.handlers import unknown
 
 
 class Command(BaseCommand):
@@ -23,7 +25,10 @@ class Command(BaseCommand):
             bot=bot,
         )
         dispatcher = updater.dispatcher
-        dispatcher.add_handler(conv_handler)
+
+        # TODO регистрируем хендлеры в зависимости от того кто пишет боту
+
+        dispatcher.add_handler(employee_conversation)
         unknown_command_handler = MessageHandler(Filters.command, unknown)
         dispatcher.add_handler(unknown_command_handler)
         updater.start_polling()
