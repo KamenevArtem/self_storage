@@ -4,29 +4,22 @@ from phonenumber_field.modelfields import PhoneNumberField
 
 
 class Box(models.Model):
-    hight = models.FloatField(
-        verbose_name="Высота бокса",
-        null=True
-    )
-    length = models.FloatField(
-        verbose_name="Длина бокса",
-        null=True
-    )
-    width = models.FloatField(
-        verbose_name="Ширина бокса",
-        null=True
+    size = models.CharField(
+        max_length=100,
+        verbose_name='Размер бокса'
     )
     rental_price = models.PositiveBigIntegerField(
         verbose_name="Стоимость суточной аренды",
         null=True
     )
-    
+
     class Meta:
         verbose_name = "Бокс"
         verbose_name_plural = "Боксы"
-    
+
     def __str__(self):
-        return str(self.id)
+        return 'Id: {} - size: {}'.format(self.id, self.size)
+
 
 class Customer(models.Model):
     external_id = models.PositiveIntegerField(
@@ -45,7 +38,7 @@ class Customer(models.Model):
         db_index=True
     )
     phone_number = PhoneNumberField(
-        verbose_name = "Номер телефона",
+        verbose_name="Номер телефона",
         blank=True
     )
 
@@ -61,17 +54,24 @@ class Order(models.Model):
     box = models.ForeignKey(
         Box,
         verbose_name="Номер бокса",
-        related_name='boxes',
-        on_delete=models.SET_NULL,
+        related_name='orders',
+        on_delete=models.CASCADE,
         null=True,
         blank=True
     )
+    rent_time = models.IntegerField(
+        verbose_name="Срок хранения (дни)",
+        null=True
+    )
     order_start_date = models.DateField(
         verbose_name="Дата начала контракта",
-        blank=True,
         default=timezone.now,
     )
-    
+    delivery_time = models.DateField(
+        verbose_name="Дата доставки",
+        blank=True,
+        null=True
+    )
     order_end_date = models.DateField(
         verbose_name="Дата закрытия заказа",
         blank=True,
@@ -97,12 +97,16 @@ class Order(models.Model):
     )
     customer = models.ForeignKey(
         Customer,
-        verbose_name=("Клиент"),
+        verbose_name="Клиент",
         on_delete=models.CASCADE,
         related_name='orders'
-        )
+    )
     conformation = models.BooleanField(
         verbose_name='Подтверждение заказа',
+        default=False
+    )
+    completed = models.BooleanField(
+        verbose_name='Выполнение заказа',
         default=False
     )
 
