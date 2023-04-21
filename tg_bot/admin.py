@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import Box, Order, Customer
 class BoxAdmin(admin.ModelAdmin):
-    list_display = ('id', 'hight', 'length', 'width',)
+    list_display = ('id', 'size',)
 
 
 class OrderAdmin(admin.ModelAdmin):
