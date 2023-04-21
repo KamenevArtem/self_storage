@@ -16,3 +16,4 @@ class CustomerState(IntEnum):
     TAKE_STAFF = 12
     SHOW_ORDERS = 13
     HANDLE_ORDER = 14
+    RENT = 15

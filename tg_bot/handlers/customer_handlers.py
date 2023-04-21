@@ -1,4 +1,7 @@
+import datetime
 import os
+
+import phonenumbers
 import qrcode
 
 from telegram import Update
@@ -80,6 +83,7 @@ def get_staff_weight(update: Update, context: CallbackContext):
             chat_id=update.effective_chat.id,
             text='Адрес нашего склада:',
         )
+    # TODO Предлагаю этот набор вынести в бд или отдельную сущность (Enum)
     button_names = [
         'До 10 кг',
         '10-25 кг',
@@ -125,12 +129,17 @@ def get_staff_size(update: Update, context: CallbackContext):
 
 def show_price(update: Update, context: CallbackContext):
     customer = Customer.objects.get(name=update.effective_chat.username)
+    box = Box.objects.get(size=update.message.text)
+    rent_price_per_month = box.rental_price * 30
     order = customer.orders.last()
     order.cargo_size = update.message.text
+    order.box = box
     order.save()
     context.bot.send_message(
         chat_id=update.effective_chat.id,
-        text='Стоимость хранения будет составлять ... в месяц',
+        text='Стоимость хранения будет составлять {} рублей в месяц'.format(
+            rent_price_per_month
+        ),
     )
     button_names = [
         'Да',
@@ -147,7 +156,19 @@ def show_price(update: Update, context: CallbackContext):
     return CustomerState.PRICE
 
 
+def get_rent_time(update: Update, context: CallbackContext):
+    context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text='На сколько дней Вы хотите оставить вещи?')
+    return CustomerState.RENT
+
+
 def give_privacy_agreement(update: Update, context: CallbackContext):
+    customer = Customer.objects.get(name=update.effective_chat.username)
+    order = customer.orders.last()
+    order.rent_time = update.message.text
+    order.save()
+
     if update.message.text == 'Не знаю':
         context.bot.send_message(
             chat_id=update.effective_chat.id,
@@ -168,6 +189,7 @@ def give_privacy_agreement(update: Update, context: CallbackContext):
     return CustomerState.PRIVACY
 
 
+# TODO убрать если не используется больше
 def get_customer_address(update: Update, context: CallbackContext):
     context.bot.send_message(
         chat_id=update.effective_chat.id,
@@ -177,6 +199,10 @@ def get_customer_address(update: Update, context: CallbackContext):
 
 
 def get_phone_number(update: Update, context: CallbackContext):
+    customer = Customer.objects.get(name=update.effective_chat.username)
+    customer.address = update.message.text
+    customer.save()
+
     context.bot.send_message(
         chat_id=update.effective_chat.id,
         text='Введите Ваш номер телефона',
@@ -184,14 +210,44 @@ def get_phone_number(update: Update, context: CallbackContext):
     return CustomerState.PHONE_NUMBER
 
 
+# TODO посмотреть, мне кажется слишком сложная логика =)
 def check_customer_information(update: Update, context: CallbackContext):
+    customer = Customer.objects.get(
+        external_id=update.effective_chat.id,
+    )
+    try:
+        parsed_phonenumber = phonenumbers.parse(
+            update.message.text,
+            'RU'
+        )
+    except:
+        context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text='Номер телефона был введен неправильно, повторите попытку',
+        )
+        return CustomerState.PHONE_NUMBER
+
+    if phonenumbers.is_valid_number(parsed_phonenumber):
+        customer.phone_number = phonenumbers.format_number(
+            parsed_phonenumber,
+            phonenumbers.PhoneNumberFormat.E164
+        )
+        customer.save()
+    else:
+        context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text='Введеный Вами номер телефона не существует. Попробуйте '
+                 'ввести через +7',
+        )
+        return CustomerState.PHONE_NUMBER
     button_names = [
         'Да',
         'Нет'
     ]
     context.bot.send_message(
         chat_id=update.effective_chat.id,
-        text='Верны ли Ваши данные?',
+        text=f'Верны ли Ваши данные?\n Адрес: {customer.address} '
+             f'Номер телефона: {update.message.text}',
         reply_markup=services.create_tg_keyboard_markup(
             button_names,
             buttons_per_row=2,
@@ -203,25 +259,47 @@ def check_customer_information(update: Update, context: CallbackContext):
 def get_delivery_time(update: Update, context: CallbackContext):
     context.bot.send_message(
         chat_id=update.effective_chat.id,
-        text='Когда Вам удобно отправить груз?',
+        text='В какой день Вам удобно отправить вещи?'
+             'Введите дату в формате: год-месяц-день',
     )
     return CustomerState.MADE_ORDER
 
 
+# TODO по моему слишком сложно
 def create_order(update: Update, context: CallbackContext):
+    customer = Customer.objects.get(name=update.effective_chat.username)
+    order = customer.orders.last()
+    order.conformation = True
+    order.save()
+    try:
+        delivery_time = datetime.datetime.strptime(
+            update.message.text,
+            '%Y-%m-%d').date()
+        order.delivery_time = delivery_time
+        order.order_end_date = order.delivery_time + datetime.timedelta(
+            days=order.rent_time
+        )
+        order.save()
+    except:
+        context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=f'Попробуйте ещё раз, например 2023-06-15',
+        )
+        return CustomerState.MADE_ORDER
     context.bot.send_message(
         chat_id=update.effective_chat.id,
-        text='Спасибо за уделенное время. Доставщик заберет груз (дата/время), '
-             'предварительно позвонив Вам. Для повторной сессии напишите в чат /start',
+        text=f'Спасибо за уделенное время. Доставщик заберет вещи {order.delivery_time}, '
+             f'предварительно позвонив Вам. Для повторной сессии напишите в чат /start',
     )
     return ConversationHandler.END
 
 
 def take_staff(update: Update, context: CallbackContext):
-    button_names = [
-        'Заказ 1',
-        'Заказ 2',
-    ]
+    customer = Customer.objects.get(name=update.effective_chat.username)
+    orders = customer.orders.all()
+    button_names = [f'Заказ {number}' for number, order in
+                    enumerate(orders, start=1)]
+
     context.bot.send_message(
         chat_id=update.effective_chat.id,
         text='Какой заказ Вас интересует?',
@@ -235,10 +313,29 @@ def take_staff(update: Update, context: CallbackContext):
 
 
 def show_orders(update: Update, context: CallbackContext):
+    customer = Customer.objects.get(name=update.effective_chat.username)
+    orders = customer.orders.all()
+    order = orders.get(id=update.message.text.split(' ')[1])
     button_names = [
-        'Забрать вещи',
-        'Забрать вещи, но вернуть позже',
+        f'Забрать вещи. Заказ {order.id}',
+        f'Забрать вещи, но вернуть позже.',
     ]
+    close_qr_content = {
+        'Номер заказа': order.id,
+        'Время хранения': order.rent_time,
+        'Время истечения срока хранения': order.order_end_date,
+        'Статус заказа': 'Заказ закрыт'
+    }
+    close_qr = qrcode.make(close_qr_content)
+    close_qr.save('cl_qr.png')
+    back_qr_content = {
+        'Номер заказа': order.id,
+        'Время хранения': order.rent_time,
+        'Время истечения срока хранения': order.order_end_date,
+        'Статус заказа': 'Заказ приостановлен'
+    }
+    back_qr = qrcode.make(back_qr_content)
+    back_qr.save('b_qr.png')
     context.bot.send_message(
         chat_id=update.effective_chat.id,
         text='Что Вас интересует?',
@@ -252,27 +349,26 @@ def show_orders(update: Update, context: CallbackContext):
 
 
 def show_QR(update: Update, context: CallbackContext):
+    customer = Customer.objects.get(name=update.effective_chat.username)
+    orders = customer.orders.all()
+    order_id = update.message.text.split(' ')[-1]
+    order = orders.get(id=order_id)
     if update.message.text == 'Забрать вещи, но вернуть позже':
-        qr_content = [1, 5, 6, 7, 9, 7, 5]
-        qr = qrcode.make(qr_content)
-        qr.save('qr.png')
-        with open('./qr.png', 'rb') as qr_code:
-            context.bot.send_photo(
-                chat_id=update.effective_chat.id,
-                photo=qr_code,
-            )
-    elif update.message.text == 'Забрать вещи':
-        qr_content = [5, 66666, 778]
-        qr = qrcode.make(qr_content)
-        qr.save('qr.png')
-        with open('./qr.png', 'rb') as qr_code:
+        with open('./b_qr.png', 'rb') as qr_code:
             context.bot.send_photo(
                 chat_id=update.effective_chat.id,
                 photo=qr_code,
             )
     else:
-        return ConversationHandler.END
-    os.remove('./qr.png')
+        with open('./cl_qr.png', 'rb') as qr_code:
+            context.bot.send_photo(
+                chat_id=update.effective_chat.id,
+                photo=qr_code,
+            )
+            order.completed = True
+            order.save()
+    os.remove('./cl_qr.png')
+    os.remove('./b_qr.png')
     return ConversationHandler.END
 
 

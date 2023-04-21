@@ -102,6 +102,13 @@ customer_conversation = ConversationHandler(
                 pass_user_data=True,
             )
         ],
+        CustomerState.RENT: [
+            MessageHandler(
+                Filters.text,
+                customer_handlers.give_privacy_agreement,
+                pass_user_data=True,
+            ),
+        ],
         CustomerState.PRIVACY: [
             MessageHandler(
                 Filters.text('Согласен'),
