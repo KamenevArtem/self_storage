@@ -26,7 +26,7 @@ class Box(models.Model):
         verbose_name_plural = "Боксы"
     
     def __str__(self):
-        return self.id
+        return str(self.id)
 
 class Customer(models.Model):
     external_id = models.PositiveIntegerField(
