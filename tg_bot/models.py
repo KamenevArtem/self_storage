@@ -16,9 +16,10 @@ class Box(models.Model):
     class Meta:
         verbose_name = "Бокс"
         verbose_name_plural = "Боксы"
-    
+
     def __str__(self):
-        return self.size
+        return 'Id: {} - size: {}'.format(self.id, self.size)
+
 
 class Customer(models.Model):
     external_id = models.PositiveIntegerField(
@@ -37,7 +38,7 @@ class Customer(models.Model):
         db_index=True
     )
     phone_number = PhoneNumberField(
-        verbose_name = "Номер телефона",
+        verbose_name="Номер телефона",
         blank=True
     )
 
@@ -96,10 +97,10 @@ class Order(models.Model):
     )
     customer = models.ForeignKey(
         Customer,
-        verbose_name=("Клиент"),
+        verbose_name="Клиент",
         on_delete=models.CASCADE,
         related_name='orders'
-        )
+    )
     conformation = models.BooleanField(
         verbose_name='Подтверждение заказа',
         default=False
