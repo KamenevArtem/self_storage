@@ -3,9 +3,10 @@ from telegram import ReplyKeyboardRemove
 from telegram.ext import ConversationHandler
 from telegram.ext import CallbackContext
 
-from tg_bot.states import EmployeeState
-from tg_bot import services, tmp_data
+from tg_bot import services
+
 from tg_bot.models import Order
+from tg_bot.states import EmployeeState
 
 
 def start_for_employer(update: Update, _):
@@ -26,7 +27,7 @@ def start_for_employer(update: Update, _):
 def get_all_orders(update: Update, context: CallbackContext):
     context.user_data['action'] = update.message.text
     orders = Order.objects.all()
-    kbd_layout = ['Бокс {}'.format(order.box) for order in orders]
+    kbd_layout = ['Заказ {}'.format(order.id) for order in orders]
 
     update.message.reply_text(
         text='Список активных заказов',
@@ -38,25 +39,57 @@ def get_all_orders(update: Update, context: CallbackContext):
 
 def get_failed_orders(update: Update, context: CallbackContext):
     context.user_data['action'] = update.message.text
+    failed_orders = services.get_failed_orders_from_db()
+    if not failed_orders:
+        update.message.reply_text(
+            'Нет просроченных заказов',
+            reply_markup=ReplyKeyboardRemove()
+        )
+        return ConversationHandler.END
 
-    failed_orders = [order['name'] for order in tmp_data.failed_orders]
+    kbd_layout = ['Заказ {}'.format(order.id) for order in failed_orders]
 
     update.message.reply_text(
         text='Список просроченных заказов',
-        reply_markup=services.create_tg_keyboard_markup(failed_orders)
+        reply_markup=services.create_tg_keyboard_markup(kbd_layout)
     )
+
     return EmployeeState.ORDERS
 
 
 def get_order_info(update: Update, context: CallbackContext):
     action = context.user_data['action']
+    order_id = update.message.text.split()[1]
+    order = Order.objects.get(id=order_id)
+    order_info = """
+    Box: {}
+    Срок хранения: {}
+    Дата начала контракта: {}
+    Дата доставки: {}
+    Объём груза: {}
+    Вес груза: {}
+    Клиент: {}
+    Подтверждение заказа: {}
+    Выполнение заказа: {}
+    """
+    order_info_format = order_info.format(
+        order.box,
+        order.rent_time,
+        order.order_start_date,
+        order.delivery_time,
+        order.cargo_size,
+        order.cargo_weight,
+        order.customer.name,
+        'Нет' if order.conformation else 'Да',
+        'Выполнен' if order.completed else 'Не выполнен'
+    )
     if action == 'Список заказов':
-        message_for_send = 'Вывожу информацию по активному заказу {}'.format(
-            update.message.text
+        message_for_send = '  Информация по активному заказу {}'.format(
+            order_info_format
         )
     else:
-        message_for_send = 'Вывожу информацию по неактивному заказу {}'.format(
-            update.message.text
+        message_for_send = '  Информация по просроченному заказу {}'.format(
+            order_info_format
         )
 
     update.message.reply_text(
