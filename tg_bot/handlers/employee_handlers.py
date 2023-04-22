@@ -5,6 +5,7 @@ from telegram.ext import CallbackContext
 
 from tg_bot.states import EmployeeState
 from tg_bot import services, tmp_data
+from tg_bot.models import Order
 
 
 def start_for_employer(update: Update, _):
@@ -24,12 +25,12 @@ def start_for_employer(update: Update, _):
 
 def get_all_orders(update: Update, context: CallbackContext):
     context.user_data['action'] = update.message.text
-
-    orders = [order['name'] for order in tmp_data.orders]
+    orders = Order.objects.all()
+    kbd_layout = ['Бокс {}'.format(order.box) for order in orders]
 
     update.message.reply_text(
         text='Список активных заказов',
-        reply_markup=services.create_tg_keyboard_markup(orders)
+        reply_markup=services.create_tg_keyboard_markup(kbd_layout)
     )
 
     return EmployeeState.ORDERS
