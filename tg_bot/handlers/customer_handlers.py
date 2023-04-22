@@ -11,7 +11,7 @@ from telegram.ext import ConversationHandler
 
 from tg_bot import services
 from tg_bot.states import CustomerState
-from tg_bot.models import Customer, Order
+from tg_bot.models import Customer, Order, Box
 
 
 def start_for_customer(update: Update, context: CallbackContext):
@@ -83,7 +83,6 @@ def get_staff_weight(update: Update, context: CallbackContext):
             chat_id=update.effective_chat.id,
             text='Адрес нашего склада:',
         )
-    # TODO Предлагаю этот набор вынести в бд или отдельную сущность (Enum)
     button_names = [
         'До 10 кг',
         '10-25 кг',
@@ -265,7 +264,6 @@ def get_delivery_time(update: Update, context: CallbackContext):
     return CustomerState.MADE_ORDER
 
 
-# TODO по моему слишком сложно
 def create_order(update: Update, context: CallbackContext):
     customer = Customer.objects.get(name=update.effective_chat.username)
     order = customer.orders.last()

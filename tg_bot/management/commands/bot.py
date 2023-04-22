@@ -9,6 +9,7 @@ from telegram.ext import MessageHandler
 from telegram.ext import Updater
 
 from tg_bot.handlers.conversations.employee_conv import employee_conversation
+from tg_bot.handlers.conversations.customer_conv import customer_conversation
 from tg_bot.handlers import unknown
 
 
@@ -18,18 +19,28 @@ class Command(BaseCommand):
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
             level=logging.INFO
         )
-        bot = Bot(
-            token=settings.TOKEN,
+        customer_bot = Bot(
+            token=settings.CUSTOMER_TOKEN,
         )
-        updater = Updater(
-            bot=bot,
+        customer_updater = Updater(
+            bot=customer_bot
         )
-        dispatcher = updater.dispatcher
-
-        # TODO регистрируем хендлеры в зависимости от того кто пишет боту
-
-        dispatcher.add_handler(employee_conversation)
+        customer_dispatcher = customer_updater.dispatcher
+        customer_dispatcher.add_handler(customer_conversation)
         unknown_command_handler = MessageHandler(Filters.command, unknown)
-        dispatcher.add_handler(unknown_command_handler)
-        updater.start_polling(clean=True)
-        updater.idle()
+        customer_dispatcher.add_handler(unknown_command_handler)
+        customer_updater.start_polling(clean=True)
+        customer_updater.idle()
+
+        employer_bot = Bot(
+            token=settings.EMPLOYER_TOKEN,
+        )
+        employer_updater = Updater(
+            bot=employer_bot
+        )
+        employer_dispatcher = employer_updater.dispatcher
+        employer_dispatcher.add_handler(employee_conversation)
+        unknown_command_handler = MessageHandler(Filters.command, unknown)
+        employer_dispatcher.add_handler(unknown_command_handler)
+        employer_updater.start_polling(clean=True)
+        employer_updater.idle()
