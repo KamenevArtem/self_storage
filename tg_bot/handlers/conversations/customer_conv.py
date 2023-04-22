@@ -93,7 +93,7 @@ customer_conversation = ConversationHandler(
         CustomerState.PRICE: [
             MessageHandler(
                 Filters.text('Да'),
-                customer_handlers.give_privacy_agreement,
+                customer_handlers.get_rent_time,
                 pass_user_data=True,
             ),
             MessageHandler(
