@@ -31,5 +31,5 @@ class Command(BaseCommand):
         dispatcher.add_handler(employee_conversation)
         unknown_command_handler = MessageHandler(Filters.command, unknown)
         dispatcher.add_handler(unknown_command_handler)
-        updater.start_polling()
+        updater.start_polling(clean=True)
         updater.idle()
