@@ -3,6 +3,10 @@
  Версия Python 3.9 и выше.
 
 ## Как установить
+- Клонирование репозитория на сервер
+```
+git clone https://github.com/KamenevArtem/self_storage.git
+```
 - Установка зависимостей  
 ```
 pip3 install -r requirements.txt
