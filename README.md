@@ -20,6 +20,10 @@ TG_OWNER_BOT_TOKEN="токен бота для владельца"
 ```
 python3 manage.py migrate
 ```
+- Создание суперпользователя (администратора)
+```
+python3 manage.py createsuperuser
+```
 - Тестовый запуск админки
 ```
 python3 manage.py manage.py runserver
