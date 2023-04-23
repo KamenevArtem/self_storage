@@ -30,8 +30,6 @@ class Command(BaseCommand):
         unknown_command_handler = MessageHandler(Filters.command, unknown)
         customer_dispatcher.add_handler(unknown_command_handler)
         customer_updater.start_polling(clean=True)
-        customer_updater.idle()
-
         employer_bot = Bot(
             token=settings.EMPLOYER_TOKEN,
         )
@@ -44,3 +42,4 @@ class Command(BaseCommand):
         employer_dispatcher.add_handler(unknown_command_handler)
         employer_updater.start_polling(clean=True)
         employer_updater.idle()
+        customer_updater.idle()

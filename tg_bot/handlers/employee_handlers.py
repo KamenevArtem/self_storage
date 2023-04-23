@@ -5,7 +5,7 @@ from telegram.ext import CallbackContext
 
 from tg_bot import services
 
-from tg_bot.models import Order
+from tg_bot.models import Order, Customer
 from tg_bot.states import EmployeeState
 
 
@@ -99,7 +99,8 @@ def get_order_info(update: Update, context: CallbackContext):
 
 
 def get_users_count_who_clicked_ad(update: Update, _):
-    message_for_send = 'Количество пользователей прошедших по рекламе: 1'
+    active_customers = Customer.objects.values_list('id').count()
+    message_for_send = f'Количество активных пользователей {active_customers}'
     update.message.reply_text(
         message_for_send,
         reply_markup=ReplyKeyboardRemove()

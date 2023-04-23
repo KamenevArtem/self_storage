@@ -38,6 +38,7 @@ customer_conversation = ConversationHandler(
             )
         ],
         CustomerState.LEAVE_CHOICE: [
+            CommandHandler('cancel', cancel),
             MessageHandler(
                 Filters.text('Оформить заказ'),
                 customer_handlers.order_delivery,
@@ -50,6 +51,7 @@ customer_conversation = ConversationHandler(
             ),
         ],
         CustomerState.DELIVERY_ORDER: [
+            CommandHandler('cancel', cancel),
             MessageHandler(
                 Filters.text('Заказать бесплатную доставку'),
                 customer_handlers.get_staff_weight,
@@ -67,6 +69,7 @@ customer_conversation = ConversationHandler(
             )
         ],
         CustomerState.WEIGHT_CHOICE: [
+            CommandHandler('cancel', cancel),
             MessageHandler(
                 Filters.text('Не знаю'),
                 customer_handlers.give_privacy_agreement,
@@ -79,6 +82,7 @@ customer_conversation = ConversationHandler(
             ),
         ],
         CustomerState.SIZE_CHOICE: [
+            CommandHandler('cancel', cancel),
             MessageHandler(
                 Filters.text('Не знаю'),
                 customer_handlers.give_privacy_agreement,
@@ -91,6 +95,7 @@ customer_conversation = ConversationHandler(
             )
         ],
         CustomerState.PRICE: [
+            CommandHandler('cancel', cancel),
             MessageHandler(
                 Filters.text('Да'),
                 customer_handlers.get_rent_time,
@@ -103,6 +108,7 @@ customer_conversation = ConversationHandler(
             )
         ],
         CustomerState.RENT: [
+            CommandHandler('cancel', cancel),
             MessageHandler(
                 Filters.text,
                 customer_handlers.give_privacy_agreement,
@@ -110,6 +116,7 @@ customer_conversation = ConversationHandler(
             ),
         ],
         CustomerState.PRIVACY: [
+            CommandHandler('cancel', cancel),
             MessageHandler(
                 Filters.text('Согласен'),
                 customer_handlers.get_customer_address,
@@ -122,6 +129,7 @@ customer_conversation = ConversationHandler(
             )
         ],
         CustomerState.ADDRESS: [
+            CommandHandler('cancel', cancel),
             MessageHandler(
                 Filters.text,
                 customer_handlers.get_phone_number,
@@ -136,6 +144,7 @@ customer_conversation = ConversationHandler(
             )
         ],
         CustomerState.CHECK: [
+            CommandHandler('cancel', cancel),
             MessageHandler(
                 Filters.text('Да'),
                 customer_handlers.get_delivery_time,
@@ -148,6 +157,7 @@ customer_conversation = ConversationHandler(
             )
         ],
         CustomerState.MADE_ORDER: [
+            CommandHandler('cancel', cancel),
             MessageHandler(
                 Filters.text,
                 customer_handlers.create_order,
@@ -155,6 +165,7 @@ customer_conversation = ConversationHandler(
             )
         ],
         CustomerState.SHOW_ORDERS: [
+            CommandHandler('cancel', cancel),
             MessageHandler(
                 Filters.text('Стартовое меню'),
                 customer_handlers.start_for_customer,
@@ -167,6 +178,7 @@ customer_conversation = ConversationHandler(
             ),
         ],
         CustomerState.HANDLE_ORDER: [
+            CommandHandler('cancel', cancel),
             MessageHandler(
                 Filters.text('Стартовое меню'),
                 customer_handlers.start_for_customer,
