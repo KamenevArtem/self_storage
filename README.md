@@ -41,7 +41,7 @@ python manage.py runserver
 
 Результат запуска панели администрирования на локальном сервере можно пронаблюдать, перейдя по [ссылке](http://127.0.0.1:8000/admin). Имеет следующий вид:
 
-<a href="https://ibb.co/tpvcLtW"><img src="https://i.ibb.co/whPCcXx/image.png" alt="image" border="0" /></a>
+![image](https://i.ibb.co/whPCcXx/image.png)
 
 Команда, запускающая бота:
 
