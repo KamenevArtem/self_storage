@@ -1,6 +1,23 @@
 from django.db import models
 from django.utils import timezone
 from phonenumber_field.modelfields import PhoneNumberField
+from django.contrib.auth.models import User
+
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    tg_id = models.PositiveIntegerField(
+        verbose_name="Telegram ID пользователя",
+        null=True,
+        blank=True
+    )
+
+    def __unicode__(self):
+        return self.user
+
+    class Meta:
+        verbose_name = 'Профиль'
+        verbose_name_plural = 'Профили'
 
 
 class Box(models.Model):

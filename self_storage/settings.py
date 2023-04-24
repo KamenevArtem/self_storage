@@ -124,8 +124,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Настройки бота
 
 load_dotenv()
-CUSTOMER_TOKEN = os.environ['TG_CUSTOMER_BOT_TOKEN']
-
-EMPLOYER_TOKEN = os.environ['TG_OWNER_BOT_TOKEN']
+TG_BOT_TOKEN = os.environ['TG_BOT_TOKEN']
 
 PROXY_URL = 'https://telegg.ru/orig/bot'
